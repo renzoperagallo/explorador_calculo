@@ -36,12 +36,12 @@ ui <- fluidPage(
   # Usando tabsetPanel para organizar contenido en pestañas
   tabsetPanel(
     # Pestaña para la Búsqueda de Datos
-    tabPanel("Datos nominales",
+    tabPanel("Datos nominales y reales",
              sidebarLayout(
                sidebarPanel(
                  selectInput(
                    "tipo_indicador", "Tipo indicador:",
-                   choices = c("", "estimador", "indice"),
+                   choices = c("", "estimador", "indice", "indice real"),
                    selected = "indice"
                  ),
                  selectInput(
@@ -74,10 +74,7 @@ ui <- fluidPage(
                position = "left"
              )
     ),
-    tabPanel("Datos reales",
-             h3("En construcción")
-    ),
-    tabPanel("Datos desestacionalziados",
+    tabPanel("Datos desestacionalizados",
              h3("En construcción")
     ),
     tabPanel("Brechas",
@@ -109,16 +106,30 @@ server <-
       reactive(
         {
           req(input$search)
-          data$data_nominal |>
-            filter(
-              mind_name == input$tipo_indicador,
-              by_name == input$desagregacion,
-              fn_name == input$tipo_valor
-            ) |>
-            pull(agregacion) |>
-            first() |>
-            filter(id_parametro %in% input$tipo_parametro) |>
-            dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
+          if (input$tipo_indicador == "indice real"){
+            data$data_real |>
+              filter(
+                mind_name == "indice",
+                by_name == input$desagregacion,
+                fn_name == input$tipo_valor
+              ) |>
+              pull(agregacion) |>
+              first() |>
+              filter(id_parametro %in% paste0(input$tipo_parametro, "_real")) |>
+              dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
+          } else {
+            data$data_nominal |>
+              filter(
+                mind_name == input$tipo_indicador,
+                by_name == input$desagregacion,
+                fn_name == input$tipo_valor
+              ) |>
+              pull(agregacion) |>
+              first() |>
+              filter(id_parametro %in% input$tipo_parametro) |>
+              dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
+          }
+
         }
       )
 
