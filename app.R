@@ -42,7 +42,7 @@ ui <- fluidPage(
                sidebarPanel(
                  selectInput(
                    "tipo_indicador", "Tipo indicador:",
-                   choices = c("", "estimador", "indice", "indice real", "indice desestacionalizado"),
+                   choices = c("", "estimador", "indice", "indice real", "indice desestacionalizado", "brecha indice", "brecha estimador"),
                    selected = "indice"
                  ),
                  selectInput(
@@ -74,9 +74,6 @@ ui <- fluidPage(
                mainPanel(DT::DTOutput("results")) ,
                position = "left"
              )
-    ),
-    tabPanel("Brechas",
-             h3("En construcción")
     )
   )
 )
@@ -125,6 +122,21 @@ server <-
               pull(agregacion) |>
               first() |>
               filter(id_parametro %in% paste0(input$tipo_parametro, "_emp_seas")) |>
+              dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
+          }
+          if (input$tipo_indicador %in% c("brecha indice", "brecha estimador")){
+            data$data_brechas |>
+              filter(
+                mind_name == stringr::str_sub(
+                  input$tipo_indicador,
+                  start = 8L
+                  ),
+                by_name == input$desagregacion,
+                fn_name == "gap"
+              ) |>
+              pull(agregacion) |>
+              first() |>
+              filter(id_parametro %in% input$tipo_parametro) |>
               dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
           } else {
             data$data_nominal |>
