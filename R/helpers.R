@@ -33,3 +33,39 @@ extraer_rango_fechas <-
 
     return(out)
   }
+
+format_data_desestacionalizada <-
+  function(data_desestacionalizada){
+    out <-
+      data_desestacionalizada |>
+      dplyr::rowwise() |>
+      dplyr::mutate(
+        agregacion = list(
+          agregacion |>
+            dplyr::mutate(id_parametro = id_parametro) |>
+            dplyr::relocate("id_parametro", dplyr::everything())
+        )
+      ) |>
+      dplyr::ungroup() |>
+      tidyr::pivot_wider(
+        names_from = "id_parametro",
+        values_from = "agregacion"
+      ) |>
+      dplyr::rowwise() |>
+      dplyr::mutate(
+        agregacion =
+          list(
+            dplyr::bind_rows(
+              ir_emp_seas,
+              icl_emp_seas
+            )
+          )
+      ) |>
+      dplyr::select(
+        -ir_emp_seas,
+        -icl_emp_seas
+      )
+
+    return(out)
+  }
+

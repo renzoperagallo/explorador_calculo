@@ -23,7 +23,8 @@ data <-
   list(
     data_nominal = readRDS("data/tbl_agregacion.rds"),
     data_real = readRDS("data/tbl_agregacion_real.rds"),
-    data_desestacionalizada = readRDS("data/tbl_desestacionalizado.rds"),
+    data_desestacionalizada = readRDS("data/tbl_desestacionalizado.rds") |>
+      format_data_desestacionalizada(),
     data_brechas = readRDS("data/tbl_agregacion_gap.rds")
   )
 
@@ -41,7 +42,7 @@ ui <- fluidPage(
                sidebarPanel(
                  selectInput(
                    "tipo_indicador", "Tipo indicador:",
-                   choices = c("", "estimador", "indice", "indice real"),
+                   choices = c("", "estimador", "indice", "indice real", "indice desestacionalizado"),
                    selected = "indice"
                  ),
                  selectInput(
@@ -116,6 +117,17 @@ server <-
               pull(agregacion) |>
               first() |>
               filter(id_parametro %in% paste0(input$tipo_parametro, "_real")) |>
+              dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
+          }
+          if (input$tipo_indicador == "indice desestacionalizado"){
+            data$data_desestacionalizada |>
+              filter(
+                by_name == input$desagregacion,
+                fn_name == input$tipo_valor
+              ) |>
+              pull(agregacion) |>
+              first() |>
+              filter(id_parametro %in% paste0(input$tipo_parametro, "_emp_seas")) |>
               dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
           } else {
             data$data_nominal |>
