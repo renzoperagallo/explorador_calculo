@@ -21,11 +21,14 @@ git clone git@github.com:renzoperagallo/explorador_calculo.git
 ```
 
 2.  Entrar al directorio y copiar los archivos obtenidos del cálculo en
-    el directorio /data.
+    el directorio `/data`. Los datos requeridos son los siguientes:
 
-3.  Abrir el script app.R en Rstudio y clickear “Run App”.
+``` r
+# Archivos requeridos
+ ./data/tbl_agregacion.rds
+ ./data/tbl_agregacion_real.rds
+ ./data/tbl_desestacionalizado.rds
+ ./data/tbl_agregacion_gap.rds
+```
 
-## Pendientes
-
-Queda pendiente por desarrollar las secciones de “Datos reales”, “Datos
-desestacionalizados” y “Brechas”.
+3.  Abrir el script app.R en Rstudio y dar click en `Run App`.

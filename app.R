@@ -29,54 +29,50 @@ data <-
   )
 
 ##### Shiny UI #####
+titulo <- "Explorador de datos IR-ICL año base 2023"
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-  titlePanel("Datos IR-ICL año base 2023"),
-
-  # Usando tabsetPanel para organizar contenido en pestañas
-  tabsetPanel(
-    # Pestaña para la Búsqueda de Datos
-    tabPanel("Datos nominales y reales",
-             sidebarLayout(
-               sidebarPanel(
-                 selectInput(
-                   "tipo_indicador", "Tipo indicador:",
-                   choices = c("", "estimador", "indice", "indice real", "indice desestacionalizado", "brecha indice", "brecha estimador"),
-                   selected = "indice"
-                 ),
-                 selectInput(
-                   "desagregacion", "Desagregacion:",
-                   choices = c("", "general", "sexo", "grupo", "tamano", "categoria", "categoria-sexo", "categoria-grupo", "categoria-tamaño", "categoria-grupo-sexo"),
-                   selected = "general"
-                 ),
-                 selectInput(
-                   "tipo_valor", "Tipo valor:",
-                   choices = c("", "lvl", "var_01", "var_12", "var_ud", "inc_01", "inc_12", "inc_ud"),
-                   selected = "lvl"
-                 ),
-                 selectInput(
-                   "tipo_parametro", "Parametro:",
-                   choices = c("", "ir", "icl", "clht", "hent", "hont", "htnt", "roho", "roreht"),
-                   multiple = TRUE,
-                   selected = "ir"
-                 ),
-                 numericInput("ano_from", "Desde (año):", 2023, min = 2010, max = 2050, step = 1),
-                 numericInput("mes_from", "Desde (mes):", 1, min = 1, max = 12, step = 1),
-                 numericInput("ano_to", "Hasta (año):", 2050, min = 2010, max = 2050, step = 1),
-                 numericInput("mes_to", "Hasta (mes):", 12, min = 1, max = 12, step = 1),
-                 helpText("Filtro adiccional: (evite usar espacios)"),
-                 textInput("columna_filtro", "Ingrese nombre columna de filtro:", ""),
-                 textInput("valor_filtro", "Ingrese valor de filtro:", ""),
-                 helpText("Evite usar espacios y recuerde borrar los filtros cuando las columnas no coinciden con el nuevo cuadro."),
-                 actionButton("search", "Buscar")
-               ),
-               mainPanel(DT::DTOutput("results")) ,
-               position = "left"
-             )
-    )
+  titlePanel(titulo, windowTitle = titulo),
+  sidebarLayout(
+    sidebarPanel(
+      helpText("Seleccione los filtros y presione 'buscar'. Se renderizará una tabla siempre y cuando existan datos para la combinatoria requerida."),
+      selectInput(
+        "tipo_indicador", "Tipo indicador:",
+        choices = c("", "estimador", "indice", "indice real", "indice desestacionalizado", "brecha indice", "brecha estimador"),
+        selected = "indice"
+      ),
+      selectInput(
+        "desagregacion", "Desagregacion:",
+        choices = c("", "general", "sexo", "grupo", "tamano", "categoria", "categoria-sexo", "categoria-grupo", "categoria-tamaño", "categoria-grupo-sexo"),
+        selected = "general"
+      ),
+      selectInput(
+        "tipo_valor", "Tipo valor:",
+        choices = c("", "lvl", "var_01", "var_12", "var_ud", "inc_01", "inc_12", "inc_ud"),
+        selected = "lvl"
+      ),
+      selectInput(
+        "tipo_parametro", "Parametro:",
+        choices = c("", "ir", "icl", "clht", "hent", "hont", "htnt", "roho", "roreht"),
+        multiple = TRUE,
+        selected = "ir"
+      ),
+      numericInput("ano_from", "Desde (año):", 2023, min = 2010, max = 2050, step = 1),
+      numericInput("mes_from", "Desde (mes):", 1, min = 1, max = 12, step = 1),
+      numericInput("ano_to", "Hasta (año):", 2050, min = 2010, max = 2050, step = 1),
+      numericInput("mes_to", "Hasta (mes):", 12, min = 1, max = 12, step = 1),
+      helpText("Filtro adiccional: (evite usar espacios)"),
+      textInput("columna_filtro", "Ingrese nombre columna de filtro:", ""),
+      textInput("valor_filtro", "Ingrese valor de filtro:", ""),
+      helpText("Evite usar espacios y recuerde borrar los filtros cuando las columnas no coinciden con el nuevo cuadro."),
+      actionButton("search", "Buscar")
+    ),
+    mainPanel(DT::DTOutput("results")) ,
+    position = "left"
   )
 )
+
 
 ##### Shiny server #####
 
@@ -130,7 +126,7 @@ server <-
                 mind_name == stringr::str_sub(
                   input$tipo_indicador,
                   start = 8L
-                  ),
+                ),
                 by_name == input$desagregacion,
                 fn_name == "gap"
               ) |>
@@ -169,21 +165,23 @@ server <-
         }
       )
 
-    output$results <-
-      DT::renderDT(
-        final_filtered_data(),
-        options = list(
-          lengthChange = TRUE,
-          pageLength = 100,
-          processing = FALSE,
-          initComplete = I('function(setting, json) { alert("done"); }'),
-          dom = 'Bfrtip',  # Añade un panel de botones al principio de la tabla
-          buttons = c('copy', 'csv', 'excel', 'pdf', 'print')  # Botones de exportación
-        ),
-        extensions = 'Buttons',
-        width = "auto",
-        rownames = FALSE
-      )
+    output$results <- DT::renderDT(
+      final_filtered_data(),
+      options = list(
+        lengthChange = TRUE,
+        pageLength = 100,
+        processing = FALSE,
+        initComplete = I('function(setting, json) { alert("done"); }'),
+        dom = 'Bfrtip',  # Añade un panel de botones al principio de la tabla
+        buttons = list(
+          'copy', 'csv', 'excel', 'pdf', 'print',  # Botones de exportación
+          list(extend = 'colvis', text = 'Mostrar/Ocultar Columnas')  # Botón de visibilidad de columnas
+        )
+      ),
+      extensions = 'Buttons',  # Añade la extensión para los botones
+      width = "auto",
+      rownames = FALSE
+    )
 
   }
 # Run the application
