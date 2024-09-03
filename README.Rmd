@@ -11,7 +11,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Explorador cálculo
+# Explorador de datos IR-ICL año base 2023"
 
 <!-- badges: start -->
 <!-- badges: end -->
