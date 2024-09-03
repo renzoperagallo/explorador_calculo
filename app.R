@@ -75,9 +75,6 @@ ui <- fluidPage(
                position = "left"
              )
     ),
-    tabPanel("Datos desestacionalizados",
-             h3("En construcción")
-    ),
     tabPanel("Brechas",
              h3("En construcción")
     )
