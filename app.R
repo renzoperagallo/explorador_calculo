@@ -100,7 +100,6 @@ server <-
           if (input$tipo_indicador == "indice real"){
             data$data_real |>
               filter(
-                mind_name == "indice",
                 by_name == input$desagregacion,
                 fn_name == input$tipo_valor
               ) |>
@@ -108,8 +107,7 @@ server <-
               first() |>
               filter(id_parametro %in% paste0(input$tipo_parametro, "_real")) |>
               dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
-          }
-          if (input$tipo_indicador == "indice desestacionalizado"){
+          } else if (input$tipo_indicador == "indice desestacionalizado"){
             data$data_desestacionalizada |>
               filter(
                 by_name == input$desagregacion,
@@ -119,8 +117,7 @@ server <-
               first() |>
               filter(id_parametro %in% paste0(input$tipo_parametro, "_emp_seas")) |>
               dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
-          }
-          if (input$tipo_indicador %in% c("brecha indice", "brecha estimador")){
+          } else if (input$tipo_indicador %in% c("brecha indice", "brecha estimador")){
             data$data_brechas |>
               filter(
                 mind_name == stringr::str_sub(
@@ -144,6 +141,15 @@ server <-
               pull(agregacion) |>
               first() |>
               filter(id_parametro %in% input$tipo_parametro) |>
+              dplyr::mutate(
+                !!input$tipo_valor :=
+                  dplyr::case_when(
+                    input$tipo_valor == "lvl" ~ round(!!sym(input$tipo_valor), 2),
+                    input$tipo_valor %in% c("var_01", "var_12", "var_ud") ~ round(!!sym(input$tipo_valor), 2),
+                    input$tipo_valor %in% c("inc_01", "inc_12", "inc_ud") ~ round(!!sym(input$tipo_valor), 3),
+                    TRUE ~ !!sym(input$tipo_valor)
+                  )
+              ) |>
               dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
           }
 
