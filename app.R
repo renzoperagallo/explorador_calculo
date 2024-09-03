@@ -1,16 +1,23 @@
+
+# Paquetes y funciones ----------------------------------------------------
+
 source("R/helpers.R")
 
+# Lista de paquetes necesarios
 app_list <- c("shiny", "dplyr", "DT")
 
-length(app_list)
+# Instala y carga los paquetes que faltan
+lapply(app_list, function(pkg) {
+  if (!require(pkg, character.only = TRUE, quietly = TRUE)) {
+    install.packages(pkg)
+    library(pkg, character.only = TRUE)
+  }
+})
 
-for (i in app_list){
 
-}
+# App ---------------------------------------------------------------------
 
-library(shiny)
-library(dplyr)
-if (!library("DT", logical.return = TRUE,quietly = TRUE)){install.packages("DT")}
+##### Data #####
 
 data <-
   list(
@@ -19,6 +26,8 @@ data <-
     data_desestacionalizada = readRDS("data/tbl_desestacionalizado.rds"),
     data_brechas = readRDS("data/tbl_agregacion_gap.rds")
   )
+
+##### Shiny UI #####
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -32,20 +41,24 @@ ui <- fluidPage(
                sidebarPanel(
                  selectInput(
                    "tipo_indicador", "Tipo indicador:",
-                   choices = c("", "estimador", "indice")
+                   choices = c("", "estimador", "indice"),
+                   selected = "indice"
                  ),
                  selectInput(
                    "desagregacion", "Desagregacion:",
-                   choices = c("", "general", "sexo", "grupo", "tamano", "categoria", "categoria-sexo", "categoria-grupo", "categoria-tamaño", "categoria-grupo-sexo")
+                   choices = c("", "general", "sexo", "grupo", "tamano", "categoria", "categoria-sexo", "categoria-grupo", "categoria-tamaño", "categoria-grupo-sexo"),
+                   selected = "general"
                  ),
                  selectInput(
                    "tipo_valor", "Tipo valor:",
-                   choices = c("", "lvl", "var_01", "var_12", "var_ud", "inc_01", "inc_12", "inc_ud")
+                   choices = c("", "lvl", "var_01", "var_12", "var_ud", "inc_01", "inc_12", "inc_ud"),
+                   selected = "lvl"
                  ),
                  selectInput(
                    "tipo_parametro", "Parametro:",
                    choices = c("", "ir", "icl", "clht", "hent", "hont", "htnt", "roho", "roreht"),
-                   multiple = TRUE
+                   multiple = TRUE,
+                   selected = "ir"
                  ),
                  numericInput("ano_from", "Desde (año):", 2023, min = 2010, max = 2050, step = 1),
                  numericInput("mes_from", "Desde (mes):", 1, min = 1, max = 12, step = 1),
@@ -57,9 +70,8 @@ ui <- fluidPage(
                  helpText("Evite usar espacios y recuerde borrar los filtros cuando las columnas no coinciden con el nuevo cuadro."),
                  actionButton("search", "Buscar")
                ),
-               mainPanel(
-                 tableOutput("results")
-               )
+               mainPanel(DT::DTOutput("results")) ,
+               position = "left"
              )
     ),
     tabPanel("Datos reales",
@@ -73,6 +85,8 @@ ui <- fluidPage(
     )
   )
 )
+
+##### Shiny server #####
 
 # Define server logic required to draw a histogram
 server <-
@@ -123,10 +137,22 @@ server <-
         }
       )
 
-    # Mostrar los resultados filtrados
-    output$results <- renderTable({
-      final_filtered_data()
-    })
+    output$results <-
+      DT::renderDT(
+        final_filtered_data(),
+        options = list(
+          lengthChange = TRUE,
+          pageLength = 100,
+          processing = FALSE,
+          initComplete = I('function(setting, json) { alert("done"); }'),
+          dom = 'Bfrtip',  # Añade un panel de botones al principio de la tabla
+          buttons = c('copy', 'csv', 'excel', 'pdf', 'print')  # Botones de exportación
+        ),
+        extensions = 'Buttons',
+        width = "auto",
+        rownames = FALSE
+      )
+
   }
 # Run the application
 shinyApp(ui = ui, server = server)
