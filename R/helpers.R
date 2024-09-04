@@ -69,7 +69,48 @@ format_data_desestacionalizada <-
     return(out)
   }
 
+order_df <-
+  function(df){
 
+    desagregaciones <- c("sexo", "categoria", "tamano", "grupo")
+
+    out <-
+      df |>
+      dplyr::relocate(
+        id_parametro,
+        ano,
+        mes,
+        periodo,
+        dplyr::any_of(desagregaciones),
+        txt,
+        .before = valores
+        )
+
+    out <-
+      out |>
+      dplyr::select(
+        -dplyr::any_of(ends_with("_texto")),
+        -dplyr::any_of(c("lvl", "var_12", "var_01", "var_ud", "inc_01", "inc_12", "inc_ud"))
+      )
+
+    return(out)
+  }
+
+arrange_df <-
+  function(df){
+
+    col_names <- c("id_parametro", "ano", "mes", "tamano", "categoria", "sexo", "grupo")
+
+    out <-
+      df |>
+      dplyr::arrange(
+        dplyr::across(
+          dplyr::any_of(col_names)
+        )
+      )
+
+    return(out)
+  }
 
 add_label <-
   function(data, des) {
@@ -83,14 +124,12 @@ add_label <-
         dplyr::rename(
            txt = !!dplyr::sym(paste0(des, "_texto"))
         ) |>
-        dplyr::select(-!!dplyr::sym(des)) |>
         dplyr::mutate(
           txt = stringr::str_trim(txt),
           id_parametro = stringr::str_to_upper(id_parametro)
         ) |>
-        dplyr::select(
-          periodo, id_parametro, txt, valores
-        )
+        order_df() |>
+        arrange_df()
 
     } else if (des == "general") {
       data |>
@@ -98,11 +137,10 @@ add_label <-
           id_parametro = stringr::str_to_upper(id_parametro),
           txt = "general"
         )  |>
-        dplyr::select(
-          periodo, id_parametro, txt, valores
-        )
-    } else if(stringr::str_detect(des, "-")) {
+        order_df() |>
+        arrange_df()
 
+    } else if(stringr::str_detect(des, "-")) {
 
     data |>
       dplyr::left_join(
@@ -119,21 +157,19 @@ add_label <-
             !!dplyr::sym(paste0(stringr::str_split_1(des, "-")[2], "_texto"))
           )
       ) |>
-      dplyr::select(-!!dplyr::sym(stringr::str_split_1(des, "-")[1]), -!!dplyr::sym(stringr::str_split_1(des, "-")[2])) |>
       dplyr::mutate(
         txt = stringr::str_trim(txt),
         id_parametro = stringr::str_to_upper(id_parametro)
       ) |>
-      dplyr::select(
-        periodo, id_parametro, txt, valores
-      )
+        order_df() |>
+        arrange_df()
 
     } else {
       data |>
         dplyr::mutate(
           txt = "general"
-        )
-
+        ) |>
+        order_df() |>
+        arrange_df()
     }
-
   }

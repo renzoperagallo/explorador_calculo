@@ -256,7 +256,7 @@ server <-
       )
 
     output$results <- DT::renderDT(
-      final_filtered_data(),
+      final_filtered_data() |> dplyr::select(-periodo),
       options = list(
         lengthChange = TRUE,
         pageLength = 100,
@@ -287,10 +287,7 @@ server <-
         hc_xAxis(categories = final_filtered_data()$mes) |>
         hc_yAxis(title = list(text = input$tipo_valor)) |>
         highcharter::hc_add_theme(highcharter::hc_theme_538())
-
     })
-
-
   }
 # Run the application
 shinyApp(ui = ui, server = server)
