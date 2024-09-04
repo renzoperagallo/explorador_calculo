@@ -4,7 +4,7 @@
 source("R/helpers.R")
 
 # Lista de paquetes necesarios
-app_list <- c("shiny", "dplyr", "DT", "highcharter")
+app_list <- c("shiny", "dplyr", "DT", "highcharter", "shinyWidgets")
 
 # Instala y carga los paquetes que faltan
 lapply(app_list, function(pkg) {
@@ -33,6 +33,12 @@ titulo <- "Explorador de datos IR-ICL año base 2023"
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
+  # use a gradient in background
+  setBackgroundColor(
+    color = c("#F7FBFF", "#2171B5"),
+    gradient = "linear",
+    direction = "bottom"
+  ),
   titlePanel(titulo, windowTitle = titulo),
   sidebarLayout(
     sidebarPanel(
@@ -254,8 +260,7 @@ server <-
     )
 
     ## Problemas:
-    ## - Si quiero ver un gráfico de algo desagregado, se ve mal.
-    ## - Periodo se ve con número del 1 al ....
+    ## - Si quiero ver un gráfico de algo desagregadox2, se ve mal.
     # Generar el gráfico con highcharter
     output$grafico_resultados <- renderHighchart({
 
@@ -267,7 +272,7 @@ server <-
         hc_title(text = paste("Evolución de", input$tipo_valor)) |>
         hc_xAxis(categories = final_filtered_data()$mes) |>
         hc_yAxis(title = list(text = input$tipo_valor)) |>
-        highcharter::hc_add_theme(highcharter::hc_theme_bloom())
+        highcharter::hc_add_theme(highcharter::hc_theme_538())
 
     })
 
