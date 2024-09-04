@@ -44,19 +44,15 @@ ui <- fluidPage(
       ),
       selectInput(
         "desagregacion", "Desagregacion:",
-        choices = c("", "general", "sexo", "grupo", "tamano", "categoria", "categoria-sexo", "categoria-grupo", "categoria-tamaño", "categoria-grupo-sexo"),
-        selected = "general"
+        choices = NULL
       ),
       selectInput(
         "tipo_valor", "Tipo valor:",
-        choices = c("", "lvl", "var_01", "var_12", "var_ud", "inc_01", "inc_12", "inc_ud"),
-        selected = "lvl"
+        choices = NULL
       ),
       selectInput(
         "tipo_parametro", "Parametro:",
-        choices = c("", "ir", "icl", "clht", "hent", "hont", "htnt", "roho", "roreht"),
-        multiple = TRUE,
-        selected = "ir"
+        choices = NULL
       ),
       numericInput("ano_from", "Desde (año):", 2023, min = 2010, max = 2050, step = 1),
       numericInput("mes_from", "Desde (mes):", 1, min = 1, max = 12, step = 1),
@@ -68,7 +64,10 @@ ui <- fluidPage(
       helpText("Evite usar espacios y recuerde borrar los filtros cuando las columnas no coinciden con el nuevo cuadro."),
       actionButton("search", "Buscar")
     ),
-    mainPanel(DT::DTOutput("results")) ,
+    mainPanel(
+      DT::DTOutput("results")
+    ),
+
     position = "left"
   )
 )
@@ -78,7 +77,38 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <-
-  function(input, output) {
+  function(input, output, session) {
+
+    # Observa cuando cambia el tipo de indicador
+    observeEvent(input$tipo_indicador, {
+
+      filtered_data <- switch(input$tipo_indicador,
+                              "estimador" = tidyr::unnest(data$data_nominal |> dplyr::filter(mind_name == "estimador"), cols = agregacion),
+                              "indice" = tidyr::unnest(data$data_nominal |> dplyr::filter(mind_name == "indice"), cols = agregacion),
+                              "indice real" = tidyr::unnest(data$data_real, cols = agregacion),
+                              "indice desestacionalizado" = tidyr::unnest(data$data_desestacionalizada, cols = agregacion),
+                              "brecha indice" = tidyr::unnest(data$data_brechas |> dplyr::filter(mind_name == "indice"), cols = agregacion),
+                              "brecha estimador" = tidyr::unnest(data$data_brechas |> dplyr::filter(mind_name == "estimador"), cols = agregacion),
+                              NULL)
+
+
+      # Extrae las opciones únicas para el selector de desagregación basado en la columna by_name
+      new_choices_desagregacion <- unique(filtered_data$by_name)
+
+      # Extrae las opciones únicas para el selector de tipo_valor basado en la columna fn_name
+      new_choices_tipo_valor <- unique(filtered_data$fn_name)
+
+      # Extrae las opciones únicas para el selector de tipo_parametro basado en la columna id_parametro
+      new_choices_tipo_parametro <- unique(filtered_data$id_parametro)
+
+      # Actualiza los selectores con las nuevas opciones
+      updateSelectInput(session, "desagregacion", choices = new_choices_desagregacion, selected = new_choices_desagregacion[1])
+      updateSelectInput(session, "tipo_valor", choices = new_choices_tipo_valor, selected = new_choices_tipo_valor[1])
+      updateSelectInput(session, "tipo_parametro", choices = new_choices_tipo_parametro, selected = new_choices_tipo_parametro[1])
+    })
+
+
+
 
     fechas_filtradas <-
       reactive(
@@ -105,7 +135,16 @@ server <-
               ) |>
               pull(agregacion) |>
               first() |>
-              filter(id_parametro %in% paste0(input$tipo_parametro, "_real")) |>
+              filter(id_parametro %in% paste0(input$tipo_parametro)) |>
+              dplyr::mutate(
+                !!input$tipo_valor :=
+                  dplyr::case_when(
+                    input$tipo_valor %in% c("var_01", "var_12", "var_ud") ~ round(!!sym(input$tipo_valor), 2),
+                    input$tipo_valor %in% c("inc_01", "inc_12", "inc_ud") ~ round(!!sym(input$tipo_valor), 3),
+                    TRUE ~ round(!!sym(input$tipo_valor), 2)
+                  ),
+                periodo = paste0(ano, "-", mes)
+              ) |>
               dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
           } else if (input$tipo_indicador == "indice desestacionalizado"){
             data$data_desestacionalizada |>
@@ -115,7 +154,7 @@ server <-
               ) |>
               pull(agregacion) |>
               first() |>
-              filter(id_parametro %in% paste0(input$tipo_parametro, "_emp_seas")) |>
+              filter(id_parametro %in% paste0(input$tipo_parametro)) |>
               dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
           } else if (input$tipo_indicador %in% c("brecha indice", "brecha estimador")){
             data$data_brechas |>
@@ -130,6 +169,12 @@ server <-
               pull(agregacion) |>
               first() |>
               filter(id_parametro %in% input$tipo_parametro) |>
+              dplyr::mutate(
+                  dplyr::across(
+                    dplyr::contains("brecha"),
+                    ~ round(. * 100, 2)
+                  )
+                  ) |>
               dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
           } else {
             data$data_nominal |>
@@ -144,13 +189,17 @@ server <-
               dplyr::mutate(
                 !!input$tipo_valor :=
                   dplyr::case_when(
-                    input$tipo_valor == "lvl" ~ round(!!sym(input$tipo_valor), 2),
+                    input$tipo_valor == "lvl" & input$tipo_parametro %in% c("roho", "rehe", "clht", "roreht")  ~ round(!!sym(input$tipo_valor), 0),
+                    input$tipo_valor == "lvl" & input$tipo_parametro %in% c("hont", "hent", "htnt")  ~ round(!!sym(input$tipo_valor), 1),
                     input$tipo_valor %in% c("var_01", "var_12", "var_ud") ~ round(!!sym(input$tipo_valor), 2),
                     input$tipo_valor %in% c("inc_01", "inc_12", "inc_ud") ~ round(!!sym(input$tipo_valor), 3),
-                    TRUE ~ !!sym(input$tipo_valor)
-                  )
+                    TRUE ~ round(!!sym(input$tipo_valor), 2)
+                  ),
+                periodo = paste0(ano, "-", mes)
               ) |>
-              dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
+              dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes")) |>
+              dplyr::relocate(periodo, .before = ano) |>
+              dplyr::select(-ano, -mes)
           }
 
         }
@@ -188,6 +237,7 @@ server <-
       width = "auto",
       rownames = FALSE
     )
+
 
   }
 # Run the application
