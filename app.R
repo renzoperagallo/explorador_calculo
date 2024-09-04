@@ -4,7 +4,7 @@
 source("R/helpers.R")
 
 # Lista de paquetes necesarios
-app_list <- c("shiny", "dplyr", "DT")
+app_list <- c("shiny", "dplyr", "DT", "highcharter")
 
 # Instala y carga los paquetes que faltan
 lapply(app_list, function(pkg) {
@@ -62,16 +62,16 @@ ui <- fluidPage(
       textInput("columna_filtro", "Ingrese nombre columna de filtro:", ""),
       textInput("valor_filtro", "Ingrese valor de filtro:", ""),
       helpText("Evite usar espacios y recuerde borrar los filtros cuando las columnas no coinciden con el nuevo cuadro."),
+      selectInput("tipo_grafico", "Tipo de gráfico:", choices = c("line", "column")),
       actionButton("search", "Buscar")
     ),
     mainPanel(
-      DT::DTOutput("results")
+      DT::DTOutput("results"),
+      highchartOutput("grafico_resultados")  # Agregar espacio para el gráfico
     ),
-
     position = "left"
   )
 )
-
 
 ##### Shiny server #####
 
@@ -106,9 +106,6 @@ server <-
       updateSelectInput(session, "tipo_valor", choices = new_choices_tipo_valor, selected = new_choices_tipo_valor[1])
       updateSelectInput(session, "tipo_parametro", choices = new_choices_tipo_parametro, selected = new_choices_tipo_parametro[1])
     })
-
-
-
 
     fechas_filtradas <-
       reactive(
@@ -199,7 +196,25 @@ server <-
               ) |>
               dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes")) |>
               dplyr::relocate(periodo, .before = ano) |>
-              dplyr::select(-ano, -mes)
+              dplyr::select(-ano, -mes) |>
+              dplyr::mutate(
+                general = input$desagregacion,
+                valores = !!sym(input$tipo_valor),
+                dplyr::across(
+                  c(-valores),
+                  ~ as.character(.)
+                ),
+                !!input$desagregacion :=
+                  case_when(
+                    !stringr::str_detect(input$desagregacion, "-") ~ as.character(!!sym(input$desagregacion)),
+                    TRUE ~ "general"
+                  ),
+                agrupado =
+                  dplyr::case_when(
+                    !input$desagregacion %in% c("general") ~ !!sym(input$desagregacion),
+                    TRUE  ~ general
+                  )
+              )
           }
 
         }
@@ -237,6 +252,24 @@ server <-
       width = "auto",
       rownames = FALSE
     )
+
+    ## Problemas:
+    ## - Si quiero ver un gráfico de algo desagregado, se ve mal.
+    ## - Periodo se ve con número del 1 al ....
+    # Generar el gráfico con highcharter
+    output$grafico_resultados <- renderHighchart({
+
+      hchart(
+        final_filtered_data(),
+        input$tipo_grafico,
+        hcaes(x = periodo, y = valores,  group = agrupado),
+      )  |>
+        hc_title(text = paste("Evolución de", input$tipo_valor)) |>
+        hc_xAxis(categories = final_filtered_data()$mes) |>
+        hc_yAxis(title = list(text = input$tipo_valor)) |>
+        highcharter::hc_add_theme(highcharter::hc_theme_bloom())
+
+    })
 
 
   }
