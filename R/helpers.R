@@ -112,6 +112,28 @@ arrange_df <-
     return(out)
   }
 
+redondear_valores <-
+  function(df, tipo_valor, tipo_parametro, redondear){
+
+    if(redondear == "Si"){
+      out <-
+        df |>
+        dplyr::mutate(
+          !!tipo_valor :=
+            dplyr::case_when(
+              tipo_valor == "lvl" & tipo_parametro %in% c("roho", "rehe", "clht", "roreht")  ~ round(!!sym(tipo_valor), 0),
+              tipo_valor == "lvl" & tipo_parametro %in% c("hont", "hent", "htnt")  ~ round(!!sym(tipo_valor), 1),
+              tipo_valor %in% c("var_01", "var_12", "var_ud") ~ round(!!sym(tipo_valor), 2),
+              tipo_valor %in% c("inc_01", "inc_12", "inc_ud") ~ round(!!sym(tipo_valor), 3),
+              TRUE ~ round(!!sym(tipo_valor), 2)
+            )
+        )
+    } else {
+      out <- df
+    }
+      return(out)
+  }
+
 add_label <-
   function(data, des) {
 

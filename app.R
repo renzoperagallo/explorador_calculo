@@ -52,6 +52,11 @@ ui <- fluidPage(
             selected = "indice"
           ),
           selectInput(
+            "redondear", "Redondear:",
+            choices = c("", "Si", "No"),
+            selected = "Si"
+          ),
+          selectInput(
             "desagregacion", "Desagregacion:",
             choices = NULL
           ),
@@ -155,13 +160,8 @@ server <-
               pull(agregacion) |>
               first() |>
               filter(id_parametro %in% paste0(input$tipo_parametro)) |>
+              redondear_valores(input$tipo_valor, input$tipo_parametro, input$redondear) |>
               dplyr::mutate(
-                !!input$tipo_valor :=
-                  dplyr::case_when(
-                    input$tipo_valor %in% c("var_01", "var_12", "var_ud") ~ round(!!sym(input$tipo_valor), 2),
-                    input$tipo_valor %in% c("inc_01", "inc_12", "inc_ud") ~ round(!!sym(input$tipo_valor), 3),
-                    TRUE ~ round(!!sym(input$tipo_valor), 2)
-                  ),
                 periodo = paste0(ano, "-", mes),
                 valores = !!sym(input$tipo_valor)
               ) |>
@@ -176,13 +176,8 @@ server <-
               pull(agregacion) |>
               first() |>
               filter(id_parametro %in% paste0(input$tipo_parametro)) |>
+              redondear_valores(input$tipo_valor, input$tipo_parametro, input$redondear) |>
               dplyr::mutate(
-                !!input$tipo_valor :=
-                  dplyr::case_when(
-                    input$tipo_valor %in% c("var_01", "var_12", "var_ud") ~ round(!!sym(input$tipo_valor), 2),
-                    input$tipo_valor %in% c("inc_01", "inc_12", "inc_ud") ~ round(!!sym(input$tipo_valor), 3),
-                    TRUE ~ round(!!sym(input$tipo_valor), 2)
-                  ),
                 periodo = paste0(ano, "-", mes),
                 valores = !!sym(input$tipo_valor)
               ) |>
@@ -204,7 +199,7 @@ server <-
               dplyr::mutate(
                 dplyr::across(
                   dplyr::where(is.numeric),
-                  ~round(., 2)
+                  ~ifelse(input$redondear == "Si", round(., 2), .)
                 )
               ) |>
               dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
@@ -218,15 +213,8 @@ server <-
               pull(agregacion) |>
               first() |>
               filter(id_parametro %in% input$tipo_parametro) |>
+              redondear_valores(input$tipo_valor, input$tipo_parametro, input$redondear) |>
               dplyr::mutate(
-                !!input$tipo_valor :=
-                  dplyr::case_when(
-                    input$tipo_valor == "lvl" & input$tipo_parametro %in% c("roho", "rehe", "clht", "roreht")  ~ round(!!sym(input$tipo_valor), 0),
-                    input$tipo_valor == "lvl" & input$tipo_parametro %in% c("hont", "hent", "htnt")  ~ round(!!sym(input$tipo_valor), 1),
-                    input$tipo_valor %in% c("var_01", "var_12", "var_ud") ~ round(!!sym(input$tipo_valor), 2),
-                    input$tipo_valor %in% c("inc_01", "inc_12", "inc_ud") ~ round(!!sym(input$tipo_valor), 3),
-                    TRUE ~ round(!!sym(input$tipo_valor), 2)
-                  ),
                 periodo = paste0(ano, "-", mes),
                 valores = !!sym(input$tipo_valor)
               ) |>
