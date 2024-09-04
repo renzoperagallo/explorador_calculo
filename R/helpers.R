@@ -69,3 +69,71 @@ format_data_desestacionalizada <-
     return(out)
   }
 
+
+
+add_label <-
+  function(data, des) {
+
+    if(des != "general" & !stringr::str_detect(des, "-")) {
+
+      data |>
+        dplyr::left_join(
+          openxlsx::read.xlsx("data-raw/label.xlsx", sheet = des)
+        ) |>
+        dplyr::rename(
+           txt = !!dplyr::sym(paste0(des, "_texto"))
+        ) |>
+        dplyr::select(-!!dplyr::sym(des)) |>
+        dplyr::mutate(
+          txt = stringr::str_trim(txt),
+          id_parametro = stringr::str_to_upper(id_parametro)
+        ) |>
+        dplyr::select(
+          periodo, id_parametro, txt, valores
+        )
+
+    } else if (des == "general") {
+      data |>
+        dplyr::mutate(
+          id_parametro = stringr::str_to_upper(id_parametro),
+          txt = "general"
+        )  |>
+        dplyr::select(
+          periodo, id_parametro, txt, valores
+        )
+    } else if(stringr::str_detect(des, "-")) {
+
+
+    data |>
+      dplyr::left_join(
+        cross_join(
+          openxlsx::read.xlsx("data-raw/label.xlsx", sheet = stringr::str_split_1(des, "-")[1]),
+          openxlsx::read.xlsx("data-raw/label.xlsx", sheet = stringr::str_split_1(des, "-")[2])
+        )
+      ) |>
+      dplyr::mutate(
+        txt =
+          paste0(
+            !!dplyr::sym(paste0(stringr::str_split_1(des, "-")[1], "_texto")),
+            "-",
+            !!dplyr::sym(paste0(stringr::str_split_1(des, "-")[2], "_texto"))
+          )
+      ) |>
+      dplyr::select(-!!dplyr::sym(stringr::str_split_1(des, "-")[1]), -!!dplyr::sym(stringr::str_split_1(des, "-")[2])) |>
+      dplyr::mutate(
+        txt = stringr::str_trim(txt),
+        id_parametro = stringr::str_to_upper(id_parametro)
+      ) |>
+      dplyr::select(
+        periodo, id_parametro, txt, valores
+      )
+
+    } else {
+      data |>
+        dplyr::mutate(
+          txt = "general"
+        )
+
+    }
+
+  }

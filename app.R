@@ -146,9 +146,11 @@ server <-
                     input$tipo_valor %in% c("inc_01", "inc_12", "inc_ud") ~ round(!!sym(input$tipo_valor), 3),
                     TRUE ~ round(!!sym(input$tipo_valor), 2)
                   ),
-                periodo = paste0(ano, "-", mes)
+                periodo = paste0(ano, "-", mes),
+                valores = !!sym(input$tipo_valor)
               ) |>
-              dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
+              dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes")) |>
+              add_label(input$desagregacion)
           } else if (input$tipo_indicador == "indice desestacionalizado"){
             data$data_desestacionalizada |>
               filter(
@@ -158,7 +160,18 @@ server <-
               pull(agregacion) |>
               first() |>
               filter(id_parametro %in% paste0(input$tipo_parametro)) |>
-              dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
+              dplyr::mutate(
+                !!input$tipo_valor :=
+                  dplyr::case_when(
+                    input$tipo_valor %in% c("var_01", "var_12", "var_ud") ~ round(!!sym(input$tipo_valor), 2),
+                    input$tipo_valor %in% c("inc_01", "inc_12", "inc_ud") ~ round(!!sym(input$tipo_valor), 3),
+                    TRUE ~ round(!!sym(input$tipo_valor), 2)
+                  ),
+                periodo = paste0(ano, "-", mes),
+                valores = !!sym(input$tipo_valor)
+              ) |>
+              dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes")) |>
+              add_label(input$desagregacion)
           } else if (input$tipo_indicador %in% c("brecha indice", "brecha estimador")){
             data$data_brechas |>
               filter(
@@ -176,9 +189,12 @@ server <-
                   dplyr::across(
                     dplyr::contains("brecha"),
                     ~ round(. * 100, 2)
-                  )
+                  ),
+                  periodo = paste0(ano, "-", mes),
+                  valores = !!sym(input$tipo_valor)
                   ) |>
-              dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
+              dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes")) |>
+              add_label(input$desagregacion)
           } else {
             data$data_nominal |>
               filter(
@@ -198,29 +214,11 @@ server <-
                     input$tipo_valor %in% c("inc_01", "inc_12", "inc_ud") ~ round(!!sym(input$tipo_valor), 3),
                     TRUE ~ round(!!sym(input$tipo_valor), 2)
                   ),
-                periodo = paste0(ano, "-", mes)
+                periodo = paste0(ano, "-", mes),
+                valores = !!sym(input$tipo_valor)
               ) |>
               dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes")) |>
-              dplyr::relocate(periodo, .before = ano) |>
-              dplyr::select(-ano, -mes) |>
-              dplyr::mutate(
-                general = input$desagregacion,
-                valores = !!sym(input$tipo_valor),
-                dplyr::across(
-                  c(-valores),
-                  ~ as.character(.)
-                ),
-                !!input$desagregacion :=
-                  case_when(
-                    !stringr::str_detect(input$desagregacion, "-") ~ as.character(!!sym(input$desagregacion)),
-                    TRUE ~ "general"
-                  ),
-                agrupado =
-                  dplyr::case_when(
-                    !input$desagregacion %in% c("general") ~ !!sym(input$desagregacion),
-                    TRUE  ~ general
-                  )
-              )
+              add_label(input$desagregacion)
           }
 
         }
@@ -267,7 +265,7 @@ server <-
       hchart(
         final_filtered_data(),
         input$tipo_grafico,
-        hcaes(x = periodo, y = valores,  group = agrupado),
+        hcaes(x = periodo, y = valores,  group = txt),
       )  |>
         hc_title(text = paste("Evolución de", input$tipo_valor)) |>
         hc_xAxis(categories = final_filtered_data()$mes) |>
