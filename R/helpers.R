@@ -82,7 +82,7 @@ order_df <-
         mes,
         periodo,
         dplyr::any_of(desagregaciones),
-        txt,
+        label,
         .before = valores
         )
 
@@ -122,10 +122,10 @@ add_label <-
           openxlsx::read.xlsx("data-raw/label.xlsx", sheet = des)
         ) |>
         dplyr::rename(
-           txt = !!dplyr::sym(paste0(des, "_texto"))
+           label = !!dplyr::sym(paste0(des, "_texto"))
         ) |>
         dplyr::mutate(
-          txt = stringr::str_trim(txt),
+          label = stringr::str_trim(label),
           id_parametro = stringr::str_to_upper(id_parametro)
         ) |>
         order_df() |>
@@ -135,7 +135,7 @@ add_label <-
       data |>
         dplyr::mutate(
           id_parametro = stringr::str_to_upper(id_parametro),
-          txt = "general"
+          label = "general"
         )  |>
         order_df() |>
         arrange_df()
@@ -150,7 +150,7 @@ add_label <-
         )
       ) |>
       dplyr::mutate(
-        txt =
+        label =
           paste0(
             !!dplyr::sym(paste0(stringr::str_split_1(des, "-")[1], "_texto")),
             "-",
@@ -158,7 +158,7 @@ add_label <-
           )
       ) |>
       dplyr::mutate(
-        txt = stringr::str_trim(txt),
+        label = stringr::str_trim(label),
         id_parametro = stringr::str_to_upper(id_parametro)
       ) |>
         order_df() |>
@@ -167,7 +167,7 @@ add_label <-
     } else {
       data |>
         dplyr::mutate(
-          txt = "general"
+          label = "general"
         ) |>
         order_df() |>
         arrange_df()
