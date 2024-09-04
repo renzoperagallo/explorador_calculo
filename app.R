@@ -109,14 +109,17 @@ server <-
     # Observa cuando cambia el tipo de indicador
     observeEvent(input$tipo_indicador, {
 
-      filtered_data <- switch(input$tipo_indicador,
-                              "estimador" = tidyr::unnest(data$data_nominal |> dplyr::filter(mind_name == "estimador"), cols = agregacion),
-                              "indice" = tidyr::unnest(data$data_nominal |> dplyr::filter(mind_name == "indice"), cols = agregacion),
-                              "indice real" = tidyr::unnest(data$data_real, cols = agregacion),
-                              "indice desestacionalizado" = tidyr::unnest(data$data_desestacionalizada, cols = agregacion),
-                              "brecha indice" = tidyr::unnest(data$data_brechas |> dplyr::filter(mind_name == "indice"), cols = agregacion),
-                              "brecha estimador" = tidyr::unnest(data$data_brechas |> dplyr::filter(mind_name == "estimador"), cols = agregacion),
-                              NULL)
+      filtered_data <-
+        switch(
+          input$tipo_indicador,
+          "estimador" = tidyr::unnest(data$data_nominal |> dplyr::filter(mind_name == "estimador"), cols = agregacion),
+          "indice" = tidyr::unnest(data$data_nominal |> dplyr::filter(mind_name == "indice"), cols = agregacion),
+          "indice real" = tidyr::unnest(data$data_real, cols = agregacion),
+          "indice desestacionalizado" = tidyr::unnest(data$data_desestacionalizada, cols = agregacion),
+          "brecha indice" = tidyr::unnest(data$data_brechas |> dplyr::filter(mind_name == "indice"), cols = agregacion),
+          "brecha estimador" = tidyr::unnest(data$data_brechas |> dplyr::filter(mind_name == "estimador"), cols = agregacion),
+          NULL
+        )
 
 
       # Extrae las opciones únicas para el selector de desagregación basado en la columna by_name
@@ -221,7 +224,6 @@ server <-
               dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes")) |>
               add_label(input$desagregacion)
           }
-
         }
       )
 
@@ -262,7 +264,6 @@ server <-
     ## - Si quiero ver un gráfico de algo desagregadox2, se ve mal.
     # Generar el gráfico con highcharter
     output$grafico_resultados <- renderHighchart({
-
       hchart(
         final_filtered_data(),
         input$tipo_grafico,
