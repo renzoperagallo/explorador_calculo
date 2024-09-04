@@ -40,44 +40,60 @@ ui <- fluidPage(
     direction = "bottom"
   ),
   titlePanel(titulo, windowTitle = titulo),
-  sidebarLayout(
-    sidebarPanel(
-      helpText("Seleccione los filtros y presione 'buscar'. Se renderizará una tabla siempre y cuando existan datos para la combinatoria requerida."),
-      selectInput(
-        "tipo_indicador", "Tipo indicador:",
-        choices = c("", "estimador", "indice", "indice real", "indice desestacionalizado", "brecha indice", "brecha estimador"),
-        selected = "indice"
-      ),
-      selectInput(
-        "desagregacion", "Desagregacion:",
-        choices = NULL
-      ),
-      selectInput(
-        "tipo_valor", "Tipo valor:",
-        choices = NULL
-      ),
-      selectInput(
-        "tipo_parametro", "Parametro:",
-        choices = NULL
-      ),
-      numericInput("ano_from", "Desde (año):", 2023, min = 2010, max = 2050, step = 1),
-      numericInput("mes_from", "Desde (mes):", 1, min = 1, max = 12, step = 1),
-      numericInput("ano_to", "Hasta (año):", 2050, min = 2010, max = 2050, step = 1),
-      numericInput("mes_to", "Hasta (mes):", 12, min = 1, max = 12, step = 1),
-      helpText("Filtro adiccional: (evite usar espacios)"),
-      textInput("columna_filtro", "Ingrese nombre columna de filtro:", ""),
-      textInput("valor_filtro", "Ingrese valor de filtro:", ""),
-      helpText("Evite usar espacios y recuerde borrar los filtros cuando las columnas no coinciden con el nuevo cuadro."),
-      selectInput("tipo_grafico", "Tipo de gráfico:", choices = c("line", "column")),
-      actionButton("search", "Buscar")
+  tabsetPanel(
+    tabPanel(
+      "Cuadros estadísticos",
+      sidebarLayout(
+        sidebarPanel(
+          helpText("Seleccione los filtros y presione 'buscar'. Se renderizará una tabla siempre y cuando existan datos para la combinatoria requerida."),
+          selectInput(
+            "tipo_indicador", "Tipo indicador:",
+            choices = c("", "estimador", "indice", "indice real", "indice desestacionalizado", "brecha indice", "brecha estimador"),
+            selected = "indice"
+          ),
+          selectInput(
+            "desagregacion", "Desagregacion:",
+            choices = NULL
+          ),
+          selectInput(
+            "tipo_valor", "Tipo valor:",
+            choices = NULL
+          ),
+          selectInput(
+            "tipo_parametro", "Parametro:",
+            choices = NULL
+          ),
+          numericInput("ano_from", "Desde (año):", 2023, min = 2010, max = 2050, step = 1),
+          numericInput("mes_from", "Desde (mes):", 1, min = 1, max = 12, step = 1),
+          numericInput("ano_to", "Hasta (año):", 2050, min = 2010, max = 2050, step = 1),
+          numericInput("mes_to", "Hasta (mes):", 12, min = 1, max = 12, step = 1),
+          helpText("Filtro adiccional: (evite usar espacios)"),
+          textInput("columna_filtro", "Ingrese nombre columna de filtro:", ""),
+          textInput("valor_filtro", "Ingrese valor de filtro:", ""),
+          helpText("Evite usar espacios y recuerde borrar los filtros cuando las columnas no coinciden con el nuevo cuadro."),
+          actionButton("search", "Buscar")
+        ),
+        mainPanel(
+          DT::DTOutput("results"),
+        ),
+        position = "left"
+      )
     ),
-    mainPanel(
-      DT::DTOutput("results"),
-      highchartOutput("grafico_resultados")  # Agregar espacio para el gráfico
-    ),
-    position = "left"
+    tabPanel(
+      "Gráficos",
+      sidebarLayout(
+        sidebarPanel(
+          helpText("Seleccione tipo de gráfico"),
+          selectInput("tipo_grafico", "Tipo de gráfico:", choices = c("line", "column"))
+        ),
+        mainPanel(
+          highchartOutput("grafico_resultados")  # Agregar espacio para el gráfico
+        ),
+        position = "left"
+      )
+    )
+    )
   )
-)
 
 ##### Shiny server #####
 
