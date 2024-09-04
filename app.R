@@ -92,8 +92,8 @@ ui <- fluidPage(
         position = "left"
       )
     )
-    )
   )
+)
 
 ##### Shiny server #####
 
@@ -202,15 +202,12 @@ server <-
               first() |>
               filter(id_parametro %in% input$tipo_parametro) |>
               dplyr::mutate(
-                  dplyr::across(
-                    dplyr::contains("brecha"),
-                    ~ round(. * 100, 2)
-                  ),
-                  periodo = paste0(ano, "-", mes),
-                  valores = !!sym(input$tipo_valor)
-                  ) |>
-              dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes")) |>
-              add_label(input$desagregacion)
+                dplyr::across(
+                  dplyr::where(is.numeric),
+                  ~round(., 2)
+                )
+              ) |>
+              dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
           } else {
             data$data_nominal |>
               filter(
@@ -256,7 +253,7 @@ server <-
       )
 
     output$results <- DT::renderDT(
-      final_filtered_data() |> dplyr::select(-periodo),
+      final_filtered_data()|> dplyr::select(-any_of("periodo")),
       options = list(
         lengthChange = TRUE,
         pageLength = 100,
