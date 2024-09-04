@@ -281,7 +281,7 @@ server <-
       hchart(
         final_filtered_data(),
         input$tipo_grafico,
-        hcaes(x = periodo, y = valores,  group = txt),
+        hcaes(x = periodo, y = valores,  group = label),
       )  |>
         hc_title(text = paste("Evolución de", input$tipo_valor)) |>
         hc_xAxis(categories = final_filtered_data()$mes) |>
