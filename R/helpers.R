@@ -134,6 +134,25 @@ redondear_valores <-
       return(out)
   }
 
+redondear_valores_brechas <-
+  function(df, redondear){
+
+    if(redondear == "Si"){
+      out <-
+        df |>
+        dplyr::mutate(
+          dplyr::across(
+            !c("id_parametro", "ano", "mes"),
+            ~ round(., 2)
+          )
+        )
+    } else {
+      out <- df
+    }
+
+    return(out)
+  }
+
 add_label <-
   function(data, des) {
 

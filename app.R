@@ -199,12 +199,7 @@ server <-
               pull(agregacion) |>
               first() |>
               filter(id_parametro %in% input$tipo_parametro) |>
-              dplyr::mutate(
-                dplyr::across(
-                  dplyr::where(is.numeric),
-                  ~ifelse(input$redondear == "Si", round(., 2), .)
-                )
-              ) |>
+              redondear_valores_brechas(input$redondear) |>
               dplyr::inner_join(fechas_filtradas(), by = c("ano", "mes"))
           } else {
             data$data_nominal |>
