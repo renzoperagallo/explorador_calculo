@@ -45,7 +45,7 @@ ui <- fluidPage(
       "Cuadros estadísticos",
       sidebarLayout(
         sidebarPanel(
-          helpText("Seleccione los filtros y presione 'buscar'. Se renderizará una tabla siempre y cuando existan datos para la combinatoria requerida."),
+          helpText("Seleccione los filtros y presione 'buscar' (o presione 'enter'). Se renderizará una tabla siempre y cuando existan datos para la combinatoria solicitada"),
           selectInput(
             "tipo_indicador", "Tipo indicador:",
             choices = c("", "estimador", "indice", "indice real", "indice desestacionalizado", "brecha indice", "brecha estimador"),
@@ -97,7 +97,14 @@ ui <- fluidPage(
         position = "left"
       )
     )
-  )
+  ),
+  tags$script(HTML("
+    $(document).on('keypress', function(e) {
+      if(e.which == 13) {  // 13 es el código ASCII para 'Enter'
+        $('#search').click();  // Simula un clic en el botón con id 'buscar'
+      }
+    });
+  "))  # Script para activar el botón con "Enter"
 )
 
 ##### Shiny server #####
