@@ -23,6 +23,7 @@ lapply(app_list, function(pkg) {
 
 # Rutas -------------------------------------------------------------------
 
+# Ruta al fileserver
 if(file_server_data){
   ruta_data <-
     paste0("//Buvmfswinp01/IR/EMRCL/calculo/build/", ano, "_", mes, "/")
