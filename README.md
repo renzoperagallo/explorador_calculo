@@ -25,8 +25,8 @@ git clone git@github.com:renzoperagallo/explorador_calculo.git
     `TRUE` si es que se quiere usar los datos alojados en el fileserver
     del IR en el INE o `FALSE` si es que se quiere usar data almacenada
     localmente. En caso de usar el fileserver, se debe especificar el
-    año y mes en las variables ano y mes. Deben estar en formato string
-    como se muestra a continuación:
+    año y mes en las variables `ano` y `mes`. Deben estar en formato
+    string como se muestra a continuación:
 
 ``` r
 # Configuracion inicial ---------------------------------------------------
