@@ -1,4 +1,11 @@
 
+# Configuracion inicial ---------------------------------------------------
+
+# TRUE si se quiere usar el fileserver, false si se quiere usar la carpeta data.
+file_server_data = TRUE
+ano = "2024" # String con el año en caso de usar fileserver.
+mes = "08" # String con el mes en caso de usar fileserver.
+
 # Paquetes y funciones ----------------------------------------------------
 
 source("R/helpers.R")
@@ -14,19 +21,40 @@ lapply(app_list, function(pkg) {
   }
 })
 
+# Rutas -------------------------------------------------------------------
+
+if(file_server_data){
+  ruta_data <-
+    paste0("//Buvmfswinp01/IR/EMRCL/calculo/build/", ano, "_", mes, "/")
+} else{
+  ruta_data <- "./data/"
+}
+
+ruta_data_nominal <-paste0(ruta_data, "tbl_agregacion.rds")
+ruta_data_real <- paste0(ruta_data, "tbl_agregacion_real.rds")
+ruta_data_desestacionalizada <- paste0(ruta_data, "tbl_desestacionalizado.rds")
+ruta_data_brechas <- paste0(ruta_data, "tbl_agregacion_gap.rds")
 
 # App ---------------------------------------------------------------------
 
 ##### Data #####
-
 data <-
   list(
-    data_nominal = readRDS("data/tbl_agregacion.rds"),
-    data_real = readRDS("data/tbl_agregacion_real.rds"),
-    data_desestacionalizada = readRDS("data/tbl_desestacionalizado.rds") |>
+    data_nominal = readRDS(ruta_data_nominal),
+    data_real = readRDS(ruta_data_real),
+    data_desestacionalizada = readRDS(ruta_data_desestacionalizada) |>
       format_data_desestacionalizada(),
-    data_brechas = readRDS("data/tbl_agregacion_gap.rds")
+    data_brechas = readRDS(ruta_data_brechas)
   )
+
+# data <-
+#   list(
+#     data_nominal = readRDS("data/tbl_agregacion.rds"),
+#     data_real = readRDS("data/tbl_agregacion_real.rds"),
+#     data_desestacionalizada = readRDS("data/tbl_desestacionalizado.rds") |>
+#       format_data_desestacionalizada(),
+#     data_brechas = readRDS("data/tbl_agregacion_gap.rds")
+#   )
 
 ##### Shiny UI #####
 titulo <- "Explorador de datos IR-ICL año base 2023"
