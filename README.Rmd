@@ -29,7 +29,18 @@ Para ello, debe:
 git clone git@github.com:renzoperagallo/explorador_calculo.git
 ```
 
-2. Entrar al directorio y copiar los archivos obtenidos del cálculo en el directorio `/data`. Los datos requeridos son los siguientes: 
+2. Abrir el script app.R en Rstudio y modificar los datos en "Configuración Inicial". La variable `file_server_data` puede ser `TRUE` si es que se quiere usar los datos alojados en el fileserver del IR en el INE o `FALSE` si es que se quiere usar data almacenada localmente. En caso de usar el fileserver, se debe especificar el año y mes en las variables ano y  mes. Deben estar en formato string como se muestra a continuación: 
+
+``` {r, eval=FALSE}
+# Configuracion inicial ---------------------------------------------------
+
+# TRUE si se quiere usar el fileserver, false si se quiere usar la carpeta data.
+file_server_data = TRUE
+ano = "2024" # String con el año en caso de usar fileserver.
+mes = "08" # String con el mes en caso de usar fileserver.
+```
+
+En caso de que se quiera usar data localmente, indicar `file_server_data = FALSE`y copiar los archivos obtenidos del cálculo en el directorio `/data`. Los datos requeridos son los siguientes: 
 
 ```{r, eval=FALSE}
 # Archivos requeridos
@@ -39,5 +50,4 @@ git clone git@github.com:renzoperagallo/explorador_calculo.git
  ./data/tbl_agregacion_gap.rds
 ```
 
-3. Abrir el script app.R en Rstudio y dar click en `Run App`.
-
+3. Dar click en `Run App`.
